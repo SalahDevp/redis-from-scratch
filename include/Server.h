@@ -14,7 +14,7 @@ private:
   int sd;
   IOHandler io;
 
-  void init();
+  void initSocket();
   void acceptConnections();
   void handleRequest(int reqfd);
 };

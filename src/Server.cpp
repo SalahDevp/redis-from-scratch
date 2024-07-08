@@ -10,15 +10,17 @@
 #include <unistd.h>
 
 void Server::start() {
-  init();
+  initSocket();
 
   acceptConnections();
 }
 
-void Server::init() {
+void Server::initSocket() {
   sd = socket(PF_INET, SOCK_STREAM, 0);
   int val = 1;
   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+  // set async mode
+  utils::fd_set_nb(sd);
 
   struct sockaddr_in addr = {};
   addr.sin_family = AF_INET;
@@ -26,11 +28,11 @@ void Server::init() {
   addr.sin_addr.s_addr = htonl(0); // listen on 0.0.0.0
 
   if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-    die("error binding to address");
+    utils::die("error binding to address");
   }
 
   if (listen(sd, SOMAXCONN)) {
-    die("error listening to address");
+    utils::die("error listening to address");
   }
   std::cout << "Server listening on port: " << PORT << std::endl;
 }
