@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <unistd.h>
 
+enum class ConnState : int { REQUEST, RESPONSE };
+
 class Connection {
 public:
   int fd;
@@ -11,6 +13,7 @@ public:
   uint32_t read_ln;
   char *write_buf;
   uint32_t write_ln;
+  ConnState state;
 
   Connection(int fd);
 

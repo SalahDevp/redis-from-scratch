@@ -3,11 +3,12 @@
 #include <cstring>
 
 Connection::Connection(int fd)
-    : fd(fd), read_buf(nullptr), read_ln(0), write_buf(nullptr), write_ln(0) {};
+    : fd(fd), read_buf(nullptr), read_ln(0), write_buf(nullptr), write_ln(0),
+      state(ConnState::REQUEST) {};
 
 Connection::Connection(const Connection &other)
     : fd(other.fd), read_buf(nullptr), read_ln(other.read_ln),
-      write_buf(nullptr), write_ln(other.write_ln) {
+      write_buf(nullptr), write_ln(other.write_ln), state(other.state) {
   if (other.read_buf) {
     read_buf = new char[other.read_ln];
     memcpy(read_buf, other.read_buf, other.read_ln);
@@ -26,6 +27,7 @@ Connection &Connection::operator=(const Connection &other) {
     fd = other.fd;
     write_ln = other.write_ln;
     read_ln = other.read_ln;
+    state = other.state;
 
     read_buf = new char[other.read_ln];
     memcpy(read_buf, other.read_buf, other.read_ln);
