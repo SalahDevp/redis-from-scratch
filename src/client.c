@@ -22,8 +22,9 @@ int main(int argc, char *argv[]) {
   srv_addr.sin_port = htons(SERVER_PORT);
   inet_aton(SERVER_ADDRESS, &srv_addr.sin_addr);
 
-  uint32_t msg_ln;
+  uint32_t msg_ln, recv_ln;
   char buf[MAX_MSG_LEN + 1];
+  char *recv_buf = NULL;
 
   // connect to server
   if (connect(clsfd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
@@ -48,6 +49,15 @@ int main(int argc, char *argv[]) {
   }
   printf("message: %s sent successfuly to %s:%d\n", buf, SERVER_ADDRESS,
          SERVER_PORT);
+
+  // read server response
+  read(clsfd, &recv_ln, sizeof(recv_ln));
+
+  recv_buf = (char *)malloc((size_t)recv_ln + 1);
+
+  read(clsfd, recv_buf, recv_ln);
+
+  printf("server response:%s\n", recv_buf);
 
   close(clsfd);
   return 0;
