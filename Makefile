@@ -1,6 +1,6 @@
 CXX = g++
 CC = gcc
-CXXFLAGS = -Iinclude -std=c++17 -Wall -Wextra
+CXXFLAGS = -Iinclude -std=c++17 -Wall -Wextra -g
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
