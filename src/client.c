@@ -5,14 +5,16 @@
 #include <strings.h>
 #include <sys/socket.h> // Core socket functions and data types
 #include <sys/types.h>  // Definitions of data types used in system calls
-#include <unistd.h>     // Miscellaneous POSIX definitions
+#include <time.h>
+#include <unistd.h> // Miscellaneous POSIX definitions
 //
 #define MAX_MSG_LEN 255
 
 const int SERVER_PORT = 8000;
 const char SERVER_ADDRESS[] = "127.0.0.1";
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   int clsfd = socket(AF_INET, SOCK_STREAM, 0);
 
   // set server address
@@ -27,7 +29,8 @@ int main(int argc, char *argv[]) {
   char *recv_buf = NULL;
 
   // connect to server
-  if (connect(clsfd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
+  if (connect(clsfd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0)
+  {
     printf("error connecting to server\n");
     exit(1);
   }
@@ -36,14 +39,23 @@ int main(int argc, char *argv[]) {
   fgets(buf, MAX_MSG_LEN + 1, stdin);
   msg_ln = strlen(buf);
   // remove \n
-  if (buf[msg_ln - 1] == '\n') {
+  if (buf[msg_ln - 1] == '\n')
+  {
     buf[--msg_ln] = '\0';
   }
 
   // send length
   write(clsfd, &msg_ln, sizeof(msg_ln));
   // send msg to server
-  if (write(clsfd, buf, msg_ln) != msg_ln) {
+  // msg is sent in to parts to simulate streaming
+  if (write(clsfd, buf, msg_ln / 2) <= 0)
+  {
+    printf("couldn't send message\n");
+    exit(1);
+  }
+  sleep(4);
+  if (write(clsfd, buf + msg_ln / 2, msg_ln - msg_ln / 2) <= 0)
+  {
     printf("couldn't send message\n");
     exit(1);
   }
