@@ -1,48 +1,61 @@
 #include "IOHandler.h"
 #include <arpa/inet.h>
-#include <iostream>
+#include <cstdint>
+#include <cstring>
 #include <netinet/ip.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-void IOHandler::read(int fd, struct message &msg) {
-  uint32_t received_ln = 0;
+/**
+ * returns true if the full message is read
+ */
+bool IOHandler::read(Connection *conn) {
 
-  // the first 4bytes are the msg length
-  if (::read(fd, &msg.len, sizeof(msg.len)) != sizeof(msg.len))
-    throw IOError("error reading message length");
+  if (conn->read_buf_size == 0) {
+    // the first 4bytes are the msg_lngth
+    uint32_t msg_ln;
+    if (::read(conn->fd, &msg_ln, sizeof(msg_ln)) != sizeof(msg_ln))
+      throw IOError("error reading message length");
 
-  // allocate buffer to receive message
-  msg.buf = new char[msg.len + 1];
-  if (msg.buf == NULL) {
-    throw IOError("error allocating buffer\n");
+    conn->allocReadBuf(msg_ln);
   }
 
-  while (received_ln < msg.len) {
-    int r = ::read(fd, msg.buf + received_ln, msg.len - received_ln);
-    if (r < 0) {
-      throw IOError("error reading message");
-    } else if (r == 0) {
-      break;
-    } else {
-      received_ln += r;
-    }
+  int r = ::read(conn->fd, conn->read_buf + conn->read_bytes,
+                 conn->read_buf_size - conn->read_bytes);
+  if (r <= 0) {
+    throw IOError("error reading message");
+  } else {
+    conn->read_bytes += r;
   }
-  msg.len = received_ln;
-  msg.buf[msg.len] = 0;
+
+  conn->read_buf[conn->read_bytes] = '\0';
+
+  return conn->read_bytes == conn->read_buf_size;
 }
 
-void IOHandler::write(int fd, const struct message &msg) {
+/**
+ * returns true if the full message is written
+ */
+bool IOHandler::write(Connection *conn) {
+
   // send message length
-  if (::write(fd, &msg.len, sizeof(msg.len)) < 0) {
-    throw IOError("error sending message");
-  }
+  uint32_t msg_ln = conn->write_buf_size;
+
+  if (conn->written_bytes == 0)
+    if (::write(conn->fd, &msg_ln, sizeof(msg_ln)) < (ssize_t)sizeof(msg_ln)) {
+      throw IOError("error sending message");
+    }
 
   // send message
-  ssize_t bytes_sent = ::write(fd, msg.buf, (size_t)msg.len);
+  ssize_t bytes_sent = ::write(conn->fd, conn->write_buf + conn->written_bytes,
+                               conn->write_buf_size - conn->written_bytes);
 
-  if (bytes_sent < 0 || bytes_sent != (ssize_t)msg.len)
+  if (bytes_sent <= 0)
     throw IOError("error sending message");
+
+  conn->written_bytes += bytes_sent;
+
+  return conn->write_buf_size == conn->written_bytes;
 }

@@ -2,8 +2,10 @@
 #include "utils.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <iostream>
 #include <netinet/ip.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -12,7 +14,7 @@
 void Server::start() {
   initSocket();
 
-  acceptConnections();
+  eventLoop();
 }
 
 void Server::initSocket() {
@@ -37,27 +39,108 @@ void Server::initSocket() {
   std::cout << "Server listening on port: " << PORT << std::endl;
 }
 
+void Server::eventLoop() {
+  std::vector<struct pollfd> poll_fds;
+
+  // event loop
+  while (true) {
+    poll_fds.clear();
+    struct pollfd sd_poll = {sd, POLLIN, 0};
+    poll_fds.push_back(sd_poll);
+
+    for (Connection *conn : connections) {
+      poll_fds.push_back(
+          {conn->fd,
+           (conn->state == ConnState::REQUEST) ? (short)POLLIN : (short)POLLOUT,
+           0});
+    }
+
+    int pv = poll(poll_fds.data(), poll_fds.size(), POLL_TIMEOUT);
+
+    if (pv < 0) {
+      utils::die("error in poll");
+    } else if (pv == 0)
+      continue;
+
+    // check ready sockets
+    for (auto pfd : poll_fds) {
+      if (pfd.revents == 0)
+        continue;
+      else if ((pfd.revents & (POLLIN | POLLOUT)) != 0) {
+        if (pfd.fd == sd) {
+          acceptConnections();
+        } else if (conn_map[pfd.fd]->state == ConnState::REQUEST) {
+          handleRequest(conn_map[pfd.fd]);
+        } else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
+          sendResponse(conn_map[pfd.fd]);
+        }
+      } else { // error or client closed connection
+        if (pfd.fd == sd) {
+          utils::die("error in poll results");
+        } else {
+          closeConnection(pfd.fd);
+        }
+      }
+    }
+  }
+}
+
 void Server::acceptConnections() {
   while (true) {
     struct sockaddr_in client_addr = {};
     socklen_t addrlen = sizeof(client_addr);
     int connfd = accept(sd, (struct sockaddr *)&client_addr, &addrlen);
     if (connfd < 0) {
-      continue; // error
+      if (errno == EWOULDBLOCK)
+        return; // no pending connections
+      utils::die("error in accept");
     }
+    addConnection(connfd);
+  }
+}
 
-    handleRequest(connfd);
+void Server::addConnection(int connfd) {
+  Connection *newConn = new Connection(connfd);
+
+  connections.push_back(newConn);
+  conn_map[connfd] = newConn;
+}
+
+void Server::closeConnection(int connfd) {
+  auto it = conn_map.find(connfd);
+  if (it != conn_map.end()) {
+    delete it->second;
+    connections.remove(it->second);
+    conn_map.erase(it);
     close(connfd);
   }
 }
 
-void Server::handleRequest(int reqfd) {
-  struct message msg;
+void Server::handleRequest(Connection *conn) {
   try {
-    io.read(reqfd, msg);
-    printf("received message: %s\n", msg.buf);
+    bool isReadDone = io.read(conn);
+    if (isReadDone) { // the full req payload has been received
+      // TODO: add req handling logic
+      conn->allocWriteBuf(conn->read_buf_size);
+      memcpy(conn->write_buf, conn->read_buf, conn->read_buf_size + 1);
+      conn->state = ConnState::RESPONSE;
+    }
+
   } catch (const IOHandler::IOError &e) {
     std::cerr << e.what() << std::endl;
+    closeConnection(conn->fd);
+  }
+}
+
+void Server::sendResponse(Connection *conn) {
+  try {
+    bool isWriteDone = io.write(conn);
+    if (isWriteDone) {
+      closeConnection(conn->fd);
+    }
+  } catch (const IOHandler::IOError &e) {
+    std::cerr << e.what() << std::endl;
+    closeConnection(conn->fd);
   }
 }
 
