@@ -1,6 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include "sds.h"
 #include <cstdint>
 #include <unistd.h>
 
@@ -9,25 +10,20 @@ enum class ConnState : int { REQUEST, RESPONSE };
 class Connection {
 public:
   int fd;
-  char *read_buf;
-  uint32_t read_buf_size;
-  uint32_t read_bytes; // bytes read so far
-  char *write_buf;
-  uint32_t write_buf_size;
-  uint32_t written_bytes; // bytes written so far
+  sds query_buf;
+  char **argv; // query args
+  int argv_ln; // size of argv
+  int argc;    // number of initialised args
+  int bs_ln;   // used to track the length of current bulk string in a query
   ConnState state;
-  uint16_t res_status;
 
   Connection(int fd);
 
-  Connection(const Connection &other);
-
-  Connection &operator=(const Connection &other);
-
   ~Connection();
 
-  void allocReadBuf(uint32_t msg_len);
-  void allocWriteBuf(uint32_t msg_len);
+  Connection(const Connection &other) = delete;
+
+  Connection &operator=(const Connection &other) = delete;
 };
 
 #endif
