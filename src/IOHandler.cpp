@@ -1,6 +1,7 @@
 #include "IOHandler.h"
+#include "sds.h"
 #include <arpa/inet.h>
-#include <cstdint>
+#include <cerrno>
 #include <cstring>
 #include <netinet/ip.h>
 #include <stdio.h>
@@ -11,46 +12,45 @@
 /**
  * returns true if the full message is read
  */
-bool IOHandler::read(Connection *conn) {
+void IOHandler::readQuery(Connection *conn) {
 
-  if (conn->read_buf_size == 0) {
-    // the first 4bytes are the msg_lngth
-    uint32_t msg_ln;
-    if (::read(conn->fd, &msg_ln, sizeof(msg_ln)) != sizeof(msg_ln))
-      throw IOError("error reading message length");
-
-    conn->allocReadBuf(msg_ln);
+  if (!conn->query_buf) {
+    conn->query_buf = sdsAlloc(PROTO_IOBUF_LEN);
   }
 
-  int r = ::read(conn->fd, conn->read_buf + conn->read_bytes,
-                 conn->read_buf_size - conn->read_bytes);
-  if (r <= 0) {
-    throw IOError("error reading message");
-  } else {
-    conn->read_bytes += r;
+  while (true) {
+    int r = read(conn->fd, conn->query_buf + sdsLen(conn->query_buf),
+                 sdsAvail(conn->query_buf));
+    if (r <= 0) {
+      if (r == 0) { // EOF
+        throw IOError("connection closed");
+      } else if (errno != EWOULDBLOCK)
+        throw IOError("error reading message");
+      else
+        break;
+    } else {
+      sdsSetLen(conn->query_buf, sdsLen(conn->query_buf) + r);
+      conn->query_buf[sdsLen(conn->query_buf)] = '\0';
+    }
   }
-
-  conn->read_buf[conn->read_bytes] = '\0';
-
-  return conn->read_bytes == conn->read_buf_size;
 }
 
 /**
  * returns true if the full message is written
  */
-bool IOHandler::write(Connection *conn) {
+/* bool IOHandler::write(Connection *conn) {
 
   // send message length
   uint32_t msg_ln = conn->write_buf_size;
 
   if (conn->written_bytes == 0)
-    if (::write(conn->fd, &msg_ln, sizeof(msg_ln)) < (ssize_t)sizeof(msg_ln)) {
-      throw IOError("error sending message");
+    if (::write(conn->fd, &msg_ln, sizeof(msg_ln)) < (ssize_t)sizeof(msg_ln))
+{ throw IOError("error sending message");
     }
 
   // send message
-  ssize_t bytes_sent = ::write(conn->fd, conn->write_buf + conn->written_bytes,
-                               conn->write_buf_size - conn->written_bytes);
+  ssize_t bytes_sent = ::write(conn->fd, conn->write_buf +
+conn->written_bytes, conn->write_buf_size - conn->written_bytes);
 
   if (bytes_sent <= 0)
     throw IOError("error sending message");
@@ -58,4 +58,4 @@ bool IOHandler::write(Connection *conn) {
   conn->written_bytes += bytes_sent;
 
   return conn->write_buf_size == conn->written_bytes;
-}
+} */

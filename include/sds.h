@@ -15,9 +15,10 @@ struct __attribute__((packed)) sdshdr {
   char buf[];
 };
 
-size_t getSdsLen(sds s);
-size_t getSdsAvail(sds s);
-sds allocSds(size_t size);
-void freeSds(sds s);
+size_t sdsLen(sds s);
+size_t sdsAvail(sds s);
+void sdsSetLen(sds s, size_t newLen);
+sds sdsAlloc(size_t size);
+void sdsFree(sds s);
 
 #endif

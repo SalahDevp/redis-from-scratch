@@ -6,9 +6,11 @@
 #include <stdexcept>
 #include <unistd.h>
 
+#define PROTO_IOBUF_LEN 16 * 1024
+
 class IOHandler {
 public:
-  bool read(Connection *conn);
+  void readQuery(Connection *conn);
   bool write(Connection *conn);
 
   class IOError : public std::runtime_error {

@@ -118,13 +118,9 @@ void Server::closeConnection(int connfd) {
 
 void Server::handleRequest(Connection *conn) {
   try {
-    bool isReadDone = io.read(conn);
-    if (isReadDone) { // the full req payload has been received
-      // TODO: add req handling logic
-      conn->allocWriteBuf(conn->read_buf_size);
-      memcpy(conn->write_buf, conn->read_buf, conn->read_buf_size + 1);
-      conn->state = ConnState::RESPONSE;
-    }
+    io.readQuery(conn);
+    // TODO: parse query
+    // TODO run command
 
   } catch (const IOHandler::IOError &e) {
     std::cerr << e.what() << std::endl;
@@ -138,16 +134,16 @@ void Server::sendResponse(Connection *conn) {
     if (isWriteDone) {
       closeConnection(conn->fd);
     }
-  } catch (const IOHandler::IOError &e) {
-    std::cerr << e.what() << std::endl;
-    closeConnection(conn->fd);
+    catch (const IOHandler::IOError &e) {
+      std::cerr << e.what() << std::endl;
+      closeConnection(conn->fd);
+    }
   }
-}
 
-int main() {
-  IOHandler ioHandler;
-  Server server(ioHandler);
-  server.start();
+  int main() {
+    IOHandler ioHandler;
+    Server server(ioHandler);
+    server.start();
 
-  return 0;
-}
+    return 0;
+  }
