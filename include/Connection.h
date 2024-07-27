@@ -2,7 +2,9 @@
 #define CONNECTION_H
 
 #include "sds.h"
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 enum class ConnState : int { REQUEST, RESPONSE };
 
@@ -10,11 +12,11 @@ class Connection {
 public:
   int fd;
   sds query_buf;
-  size_t qpos;    // used by parser
-  char **argv;    // query args
-  size_t argv_ln; // size of argv
-  size_t argc;    // number of initialised args
-  size_t bs_ln;   // used to track the length of current bulk string in a query
+  size_t qpos; // used by parser to track current parsing position
+  std::vector<std::string> argv; // query args
+  size_t argc;                   // total number of args in argv
+  size_t bs_ln; // used by parser to track the length of current bulk string in
+                // a query
   ConnState state;
 
   Connection(int fd);

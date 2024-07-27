@@ -3,9 +3,9 @@
 #include <cstring>
 
 bool Parser::parseQuery(Connection *conn) {
-  if (!conn->argv_ln) { // read array length
+  if (!conn->argc) { // read array length
     if (conn->query_buf[conn->qpos] != '*')
-      throw Parser::ParserError("missing '*'");
+      throw Parser::ParserError("expected '*'");
 
     conn->qpos++;
 
@@ -15,16 +15,14 @@ bool Parser::parseQuery(Connection *conn) {
       return false;
     }
 
-    conn->argv_ln = arrlen;
-    conn->argv = new char *[arrlen];
-    conn->argc = 0;
+    conn->argc = arrlen;
   }
 
-  while (conn->argc < conn->argv_ln) {
+  while (conn->argv.size() < conn->argc) {
     if (!conn->bs_ln) { // read bulk string length
 
       if (conn->query_buf[conn->qpos] != '$')
-        throw Parser::ParserError("missing '$'");
+        throw Parser::ParserError("expected '$'");
 
       conn->qpos++;
 
@@ -35,17 +33,16 @@ bool Parser::parseQuery(Connection *conn) {
       }
 
       conn->bs_ln = size;
-      conn->argv[conn->argc] = new char[size + 1];
     }
 
     // read bulk string
-    if (sdsLen(conn->query_buf) - conn->qpos < conn->bs_ln + 2)
+    if (sdsLen(conn->query_buf) - conn->qpos < conn->bs_ln + 2) // +2 for CRLF
       return false;
 
-    memcpy(conn->argv[conn->argc], conn->query_buf + conn->qpos, conn->bs_ln);
-    conn->argv[conn->argc][conn->bs_ln] = '\0';
+    conn->argv.push_back(
+        std::string(conn->query_buf + conn->qpos, conn->bs_ln));
 
-    conn->argc++;
+    conn->qpos += conn->bs_ln;
     conn->bs_ln = 0;
   }
 
