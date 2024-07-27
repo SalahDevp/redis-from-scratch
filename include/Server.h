@@ -3,6 +3,7 @@
 
 #include "Connection.h"
 #include "IOHandler.h"
+#include "Parser.h"
 #include <list>
 #include <poll.h>
 #include <unordered_map>
@@ -14,11 +15,13 @@
 class Server {
 public:
   void start();
+  Server() : io(), parser() {};
   Server(IOHandler handler) : io(handler) {};
 
 private:
   int sd;
   IOHandler io;
+  Parser parser;
   std::list<Connection *> connections;
   std::unordered_map<int, Connection *> conn_map;
 

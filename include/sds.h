@@ -20,5 +20,10 @@ size_t sdsAvail(sds s);
 void sdsSetLen(sds s, size_t newLen);
 sds sdsAlloc(size_t size);
 void sdsFree(sds s);
+/**
+ * shifts the string n times to the left.
+ * sets and returns the new length.
+ */
+size_t sdsShiftL(sds s, size_t n);
 
 #endif

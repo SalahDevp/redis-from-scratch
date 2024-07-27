@@ -71,9 +71,9 @@ void Server::eventLoop() {
           acceptConnections();
         } else if (conn_map[pfd.fd]->state == ConnState::REQUEST) {
           handleRequest(conn_map[pfd.fd]);
-        } else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
+        } /* else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
           sendResponse(conn_map[pfd.fd]);
-        }
+        } */
       } else { // error or client closed connection
         if (pfd.fd == sd) {
           utils::die("error in poll results");
@@ -119,16 +119,22 @@ void Server::closeConnection(int connfd) {
 void Server::handleRequest(Connection *conn) {
   try {
     io.readQuery(conn);
-    // TODO: parse query
-    // TODO run command
+    /* if the available space in the buffer is less than the threshold remove
+the already parsed portion of the buffer to free up space for the next read.*/
+    if ((double)sdsAvail(conn->query_buf) / (double)PROTO_IOBUF_LEN < 0.25) {
+      sdsShiftL(conn->query_buf, conn->qpos);
+    }
+    while (parser.parseQuery(conn)) {
+      // TODO: execute command
+    }
 
-  } catch (const IOHandler::IOError &e) {
+  } catch (const std::runtime_error &e) {
     std::cerr << e.what() << std::endl;
     closeConnection(conn->fd);
   }
 }
 
-void Server::sendResponse(Connection *conn) {
+/* void Server::sendResponse(Connection *conn) {
   try {
     bool isWriteDone = io.write(conn);
     if (isWriteDone) {
@@ -138,12 +144,11 @@ void Server::sendResponse(Connection *conn) {
       std::cerr << e.what() << std::endl;
       closeConnection(conn->fd);
     }
-  }
+  } */
 
-  int main() {
-    IOHandler ioHandler;
-    Server server(ioHandler);
-    server.start();
+int main() {
+  Server server;
+  server.start();
 
-    return 0;
-  }
+  return 0;
+}
