@@ -123,6 +123,7 @@ void Server::handleRequest(Connection *conn) {
 the already parsed portion of the buffer to free up space for the next read.*/
     if ((double)sdsAvail(conn->query_buf) / (double)PROTO_IOBUF_LEN < 0.25) {
       sdsShiftL(conn->query_buf, conn->qpos);
+      conn->qpos = 0;
     }
     while (parser.parseQuery(conn)) {
       // TODO: execute command

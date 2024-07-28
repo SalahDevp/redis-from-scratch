@@ -1,8 +1,12 @@
 #include "Parser.h"
 #include "Connection.h"
+#include "sds.h"
+#include <cassert>
 #include <cstring>
 
 bool Parser::parseQuery(Connection *conn) {
+  assert(conn->qpos < sdsLen(conn->query_buf));
+
   if (!conn->argc) { // read array length
     if (conn->query_buf[conn->qpos] != '*')
       throw Parser::ParserError("expected '*'");
@@ -22,7 +26,9 @@ bool Parser::parseQuery(Connection *conn) {
     if (!conn->bs_ln) { // read bulk string length
 
       if (conn->query_buf[conn->qpos] != '$')
-        throw Parser::ParserError("expected '$'");
+        if (conn->qpos >= sdsLen(conn->query_buf))
+          return false;
+      throw Parser::ParserError("expected '$'");
 
       conn->qpos++;
 
@@ -42,7 +48,7 @@ bool Parser::parseQuery(Connection *conn) {
     conn->argv.push_back(
         std::string(conn->query_buf + conn->qpos, conn->bs_ln));
 
-    conn->qpos += conn->bs_ln;
+    conn->qpos += conn->bs_ln + 2;
     conn->bs_ln = 0;
   }
 
