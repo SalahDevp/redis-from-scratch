@@ -3,6 +3,7 @@
 
 #include "Connection.h"
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <unistd.h>
 
@@ -10,7 +11,7 @@
 
 class IOHandler {
 public:
-  void readQuery(Connection *conn);
+  void readQuery(std::shared_ptr<Connection> &conn);
   bool write(Connection *conn);
 
   class IOError : public std::runtime_error {

@@ -3,6 +3,7 @@
 
 #include "Connection.h"
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <string>
 class Parser {
@@ -10,7 +11,7 @@ public:
   /**
    * returns true if a full command is parsed
    */
-  bool parseQuery(Connection *conn);
+  bool parseQuery(std::shared_ptr<Connection> &conn);
 
   class ParserError : public std::runtime_error {
   public:

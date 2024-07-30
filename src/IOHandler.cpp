@@ -12,7 +12,7 @@
 /**
  * returns true if the full message is read
  */
-void IOHandler::readQuery(Connection *conn) {
+void IOHandler::readQuery(std::shared_ptr<Connection> &conn) {
 
   if (!conn->query_buf) {
     conn->query_buf = sdsAlloc(PROTO_IOBUF_LEN);

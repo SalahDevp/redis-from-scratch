@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <algorithm>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -22,4 +23,9 @@ void utils::fd_set_nb(int fd) {
 
   if (fcntl(fd, F_SETFL, flags))
     utils::die("fcntl error");
+}
+
+void utils::strToLowerCase(std::string &s) {
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
 }

@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cstring>
 
-bool Parser::parseQuery(Connection *conn) {
+bool Parser::parseQuery(std::shared_ptr<Connection> &conn) {
   assert(conn->qpos < sdsLen(conn->query_buf));
 
   if (!conn->argc) { // read array length

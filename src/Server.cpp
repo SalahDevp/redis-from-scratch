@@ -2,6 +2,7 @@
 #include "utils.h"
 
 #include <arpa/inet.h>
+#include <cerrno>
 #include <errno.h>
 #include <iostream>
 #include <netinet/ip.h>
@@ -48,7 +49,7 @@ void Server::eventLoop() {
     struct pollfd sd_poll = {sd, POLLIN, 0};
     poll_fds.push_back(sd_poll);
 
-    for (Connection *conn : connections) {
+    for (auto conn : connections) {
       poll_fds.push_back(
           {conn->fd,
            (conn->state == ConnState::REQUEST) ? (short)POLLIN : (short)POLLOUT,
@@ -58,28 +59,36 @@ void Server::eventLoop() {
     int pv = poll(poll_fds.data(), poll_fds.size(), POLL_TIMEOUT);
 
     if (pv < 0) {
-      utils::die("error in poll");
+      throw Server::ServerError("error in poll");
     } else if (pv == 0)
       continue;
 
     // check ready sockets
     for (auto pfd : poll_fds) {
-      if (pfd.revents == 0)
-        continue;
-      else if ((pfd.revents & (POLLIN | POLLOUT)) != 0) {
-        if (pfd.fd == sd) {
-          acceptConnections();
-        } else if (conn_map[pfd.fd]->state == ConnState::REQUEST) {
-          handleRequest(conn_map[pfd.fd]);
-        } /* else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
-          sendResponse(conn_map[pfd.fd]);
-        } */
-      } else { // error or client closed connection
-        if (pfd.fd == sd) {
-          utils::die("error in poll results");
-        } else {
-          closeConnection(pfd.fd);
+      try {
+        if (pfd.revents == 0)
+          continue;
+        else if ((pfd.revents & (POLLIN | POLLOUT)) != 0) {
+
+          if (pfd.fd == sd) {
+            acceptConnections();
+          } else if (conn_map[pfd.fd]->state == ConnState::REQUEST) {
+            handleRequest(conn_map[pfd.fd]);
+          } /* else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
+            sendResponse(conn_map[pfd.fd]);
+          } */
+
+        } else { // error or client closed connection
+          if (pfd.fd == sd) {
+            throw Server::ServerError("error in poll results");
+          } else {
+            throw Server::ClientError("connection closed by client");
+          }
         }
+      } catch (const Server::ClientError &e) {
+        std::cerr << e.what() << std::endl;
+        closeConnection(pfd.fd);
+        continue;
       }
     }
   }
@@ -93,14 +102,14 @@ void Server::acceptConnections() {
     if (connfd < 0) {
       if (errno == EWOULDBLOCK)
         return; // no pending connections
-      utils::die("error in accept");
+      throw Server::ServerError("error in accept");
     }
     addConnection(connfd);
   }
 }
 
 void Server::addConnection(int connfd) {
-  Connection *newConn = new Connection(connfd);
+  std::shared_ptr<Connection> newConn = std::make_shared<Connection>(connfd);
 
   connections.push_back(newConn);
   conn_map[connfd] = newConn;
@@ -109,19 +118,19 @@ void Server::addConnection(int connfd) {
 void Server::closeConnection(int connfd) {
   auto it = conn_map.find(connfd);
   if (it != conn_map.end()) {
-    delete it->second;
     connections.remove(it->second);
     conn_map.erase(it);
     close(connfd);
   }
 }
 
-void Server::handleRequest(Connection *conn) {
+void Server::handleRequest(std::shared_ptr<Connection> &conn) {
   try {
     io.readQuery(conn);
     /* if the available space in the buffer is less than the threshold remove
 the already parsed portion of the buffer to free up space for the next read.*/
-    if ((double)sdsAvail(conn->query_buf) / (double)PROTO_IOBUF_LEN < 0.25) {
+    if ((double)sdsAvail(conn->query_buf) / (double)PROTO_IOBUF_LEN <
+        BUF_AVAIL_THRESHOLD) {
       sdsShiftL(conn->query_buf, conn->qpos);
       conn->qpos = 0;
     }
@@ -130,8 +139,7 @@ the already parsed portion of the buffer to free up space for the next read.*/
     }
 
   } catch (const std::runtime_error &e) {
-    std::cerr << e.what() << std::endl;
-    closeConnection(conn->fd);
+    throw Server::ClientError(std::string(e.what()));
   }
 }
 
