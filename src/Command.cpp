@@ -2,16 +2,18 @@
 #include <vector>
 
 // TODO: write result
-void SetCommand::execute(const std::vector<std::string> &argv) {
-  if (argv.size() == 3)
+void SetCommand::execute(std::shared_ptr<Connection> &conn) {
+  if (conn->argv.size() == 3)
     throw CommandError("wrong number of arguments for 'set' command.");
 
-  ds.set(argv[1], argv[2]);
+  ds.set(conn->argv[1], conn->argv[2]);
+  serializer.writeSimpleString(conn, "OK");
 }
 
-void GetCommand::execute(const std::vector<std::string> &argv) {
-  if (argv.size() != 2)
+void GetCommand::execute(std::shared_ptr<Connection> &conn) {
+  if (conn->argv.size() != 2)
     throw CommandError("wrong number of arguments for 'get' command.");
 
-  ds.get(argv[1]);
+  const std::string &value = ds.get(conn->argv[1]);
+  serializer.writeBulkString(conn, value);
 }

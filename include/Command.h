@@ -1,14 +1,16 @@
 #ifndef COMMAND_EXECUTOR_H
 #define COMMAND_EXECUTOR_H
 
+#include "Connection.h"
 #include "DataStore.h"
+#include "ResponseSerializer.h"
+#include <memory>
 #include <stdexcept>
-#include <vector>
 
 class Command {
 public:
   Command(DataStore &ds) : ds(ds) {};
-  virtual void execute(const std::vector<std::string> &argv);
+  virtual void execute(std::shared_ptr<Connection> &conn);
 
   class CommandError : public std::runtime_error {
   public:
@@ -18,16 +20,17 @@ public:
 
 protected:
   DataStore &ds;
+  ResponseSerializer serializer;
 };
 
 class SetCommand : public Command {
 public:
-  void execute(const std::vector<std::string> &argv);
+  void execute(std::shared_ptr<Connection> &conn);
 };
 
 class GetCommand : public Command {
 public:
-  void execute(const std::vector<std::string> &argv);
+  void execute(std::shared_ptr<Connection> &conn);
 };
 
 #endif

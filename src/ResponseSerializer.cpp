@@ -30,8 +30,10 @@ void ResponseSerializer::bufferWrite(std::shared_ptr<Connection> &conn,
       //  TODO: increase buffer size
       throw std::runtime_error(
           "impossible to free up space in response buffer");
+
     // remove the part of the buffer that is already sent to free space
     sdsShiftL(conn->res_buf, conn->res_pos);
   }
+
   sdsCat(conn->res_buf, str.c_str(), str.length());
 }

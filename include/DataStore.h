@@ -7,7 +7,7 @@
 class DataStore {
 public:
   void set(const std::string &key, const std::string &value);
-  std::string get(const std::string &key);
+  const std::string &get(const std::string &key);
 
   class KeyNotFoundError : public std::runtime_error {
   public:
