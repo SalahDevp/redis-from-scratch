@@ -1,11 +1,17 @@
 #include "Command.h"
-#include "utils.h"
+#include <vector>
 
-void Command::execute(std::vector<std::string> &argv) {
+// TODO: write result
+void SetCommand::execute(const std::vector<std::string> &argv) {
+  if (argv.size() == 3)
+    throw CommandError("wrong number of arguments for 'set' command.");
 
-  std::string &cmd = argv[0];
-  utils::strToLowerCase(cmd);
+  ds.set(argv[1], argv[2]);
+}
 
-  if (cmd == "get")
-    return
+void GetCommand::execute(const std::vector<std::string> &argv) {
+  if (argv.size() != 2)
+    throw CommandError("wrong number of arguments for 'get' command.");
+
+  ds.get(argv[1]);
 }
