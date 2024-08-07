@@ -1,4 +1,5 @@
 #include "sds.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -50,4 +51,13 @@ size_t sdsShiftL(sds s, size_t n) {
     sdsSetLen(s, newln);
   }
   return newln;
+}
+
+size_t sdsCat(sds dst, const char *src, size_t size) {
+  size = std::min(size, sdsAvail(dst));
+
+  memcpy(dst + sdsLen(dst), src, size);
+  sdsSetLen(dst, sdsLen(dst) + size);
+
+  return size;
 }

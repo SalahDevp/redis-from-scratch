@@ -7,8 +7,6 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#define PROTO_IOBUF_LEN 16 * 1024
-
 class IOHandler {
 public:
   void readQuery(std::shared_ptr<Connection> &conn);

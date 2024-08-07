@@ -1,7 +1,6 @@
 #ifndef COMMAND_EXECUTOR_H
 #define COMMAND_EXECUTOR_H
 
-#include "Connection.h"
 #include "DataStore.h"
 #include <stdexcept>
 #include <vector>

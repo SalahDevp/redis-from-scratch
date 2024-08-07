@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <vector>
 
+#define PROTO_IOBUF_LEN 16 * 1024
+
 enum class ConnState : int { REQUEST, RESPONSE };
 
 class Connection {
@@ -17,6 +19,8 @@ public:
   size_t argc;                   // total number of args in argv
   size_t bs_ln; // used by parser to track the length of current bulk string in
                 // a query
+  sds res_buf;
+  size_t res_pos; // to track sent parts of the res_buf
   ConnState state;
 
   Connection(int fd);

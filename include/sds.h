@@ -21,6 +21,10 @@ void sdsSetLen(sds s, size_t newLen);
 sds sdsAlloc(size_t size);
 void sdsFree(sds s);
 /**
+ * returns the number of bytes written
+ */
+size_t sdsCat(sds dst, const char *src, size_t size);
+/**
  * shifts the string n times to the left.
  * sets and returns the new length.
  */
