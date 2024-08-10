@@ -15,6 +15,7 @@ struct __attribute__((packed)) sdshdr {
   char buf[];
 };
 
+sdshdr *sdsGetHeader(sds s);
 size_t sdsLen(sds s);
 size_t sdsAvail(sds s);
 void sdsSetLen(sds s, size_t newLen);

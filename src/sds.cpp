@@ -3,23 +3,26 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <stdexcept>
 
-struct sdshdr *sdsGetHeader(sds s) {
+sdshdr *sdsGetHeader(sds s) {
   return (struct sdshdr *)(s - sizeof(sdshdr::free) - sizeof(sdshdr::len));
 }
+
 size_t sdsLen(sds s) {
   return (size_t) * (s - sizeof(sdshdr::free) - sizeof(sdshdr::len));
 }
 
 void sdsSetLen(sds s, size_t newLen) {
   struct sdshdr *hdr = sdsGetHeader(s);
-  assert(hdr->len + hdr->free >= newLen);
+  if (hdr->len + hdr->free < newLen)
+    throw std::runtime_error("sds length must be less then the allocated size");
 
   hdr->free -= newLen - hdr->len;
   hdr->len = newLen;
 }
 
-size_t sdsAvail(sds s) { return (size_t) * (s - sizeof(sdshdr::free)); }
+size_t sdsAvail(sds s) { return *((size_t *)(s - sizeof(sdshdr::free))); }
 
 sds sdsAlloc(size_t size) {
   struct sdshdr *hdr =
