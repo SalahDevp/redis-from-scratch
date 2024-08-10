@@ -1,10 +1,12 @@
 #include "Server.h"
+#include "Command.h"
 #include "utils.h"
 
 #include <arpa/inet.h>
 #include <cerrno>
 #include <errno.h>
 #include <iostream>
+#include <memory>
 #include <netinet/ip.h>
 #include <poll.h>
 #include <stdio.h>
@@ -135,7 +137,13 @@ the already parsed portion of the buffer to free up space for the next read.*/
       conn->qpos = 0;
     }
     while (parser.parseQuery(conn)) {
-      // TODO: execute command
+      // execute command
+      std::unique_ptr<Command> command =
+          CommandFactory::getCommand(conn->argv, dataStore);
+      command->execute(conn);
+      // clear command
+      conn->argv.clear();
+      conn->argc = 0;
     }
 
   } catch (const std::runtime_error &e) {

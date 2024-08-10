@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include "Connection.h"
+#include "DataStore.h"
 #include "IOHandler.h"
 #include "Parser.h"
 #include <cerrno>
@@ -12,7 +13,7 @@
 #include <string>
 #include <unordered_map>
 
-#define PORT 8000
+#define PORT 6973
 #define SOMAXCONN 128
 #define POLL_TIMEOUT -1
 #define BUF_AVAIL_THRESHOLD 0.25
@@ -40,6 +41,7 @@ private:
   int sd;
   IOHandler io;
   Parser parser;
+  DataStore dataStore;
   std::list<std::shared_ptr<Connection>> connections;
   std::unordered_map<int, std::shared_ptr<Connection>> conn_map;
 

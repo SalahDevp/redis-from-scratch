@@ -10,7 +10,7 @@
 //
 #define MAX_MSG_LEN 255
 
-const int SERVER_PORT = 8000;
+const int SERVER_PORT = 6973;
 const char SERVER_ADDRESS[] = "127.0.0.1";
 
 int main(int argc, char *argv[])

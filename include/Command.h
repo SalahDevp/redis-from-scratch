@@ -12,13 +12,15 @@
 class Command {
 public:
   Command(DataStore &ds) : ds(ds) {};
-  virtual void execute(std::shared_ptr<Connection> &conn);
+  virtual void execute(std::shared_ptr<Connection> &conn) = 0;
 
   class CommandError : public std::runtime_error {
   public:
     CommandError(const std::string &msg)
         : std::runtime_error("Command Error: " + msg) {}
   };
+
+  virtual ~Command() = default;
 
 protected:
   DataStore &ds;
