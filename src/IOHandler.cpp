@@ -9,9 +9,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-/**
- * returns true if the full message is read
- */
 void IOHandler::readQuery(std::shared_ptr<Connection> &conn) {
 
   if (!conn->query_buf) {

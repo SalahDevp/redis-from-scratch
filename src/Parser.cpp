@@ -1,6 +1,7 @@
 #include "Parser.h"
 #include "Connection.h"
 #include "sds.h"
+#include "utils.h"
 #include <cassert>
 #include <cstring>
 
@@ -25,10 +26,11 @@ bool Parser::parseQuery(std::shared_ptr<Connection> &conn) {
   while (conn->argv.size() < conn->argc) {
     if (!conn->bs_ln) { // read bulk string length
 
+      if (conn->qpos >= sdsLen(conn->query_buf))
+        return false;
+
       if (conn->query_buf[conn->qpos] != '$')
-        if (conn->qpos >= sdsLen(conn->query_buf))
-          return false;
-      throw Parser::ParserError("expected '$'");
+        throw Parser::ParserError("expected '$'");
 
       conn->qpos++;
 
@@ -57,7 +59,7 @@ bool Parser::parseQuery(std::shared_ptr<Connection> &conn) {
 
 size_t Parser::parseSize(sds s, size_t *pos) {
 
-  char *cr = strchr(s + *pos, '\r');
+  char *cr = utils::findChar(s + *pos, sdsLen(s) - *pos, '\r');
   if (!cr || (sdsLen(s) == (size_t)(cr - s) + 1) || *(cr + 1) != '\n')
     return -1; // no CRLF in query
 

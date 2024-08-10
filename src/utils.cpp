@@ -29,3 +29,12 @@ void utils::strToLowerCase(std::string &s) {
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
 }
+
+char *utils::findChar(char *buffer, size_t buffer_size, char target) {
+  for (size_t i = 0; i < buffer_size; ++i) {
+    if (buffer[i] == target) {
+      return buffer + i;
+    }
+  }
+  return nullptr;
+}
