@@ -1,7 +1,24 @@
 #include "Command.h"
 #include <vector>
 
-// TODO: write result
+std::unique_ptr<Command>
+CommandFactory::getCommand(const std::vector<std::string> &argv,
+                           DataStore &ds) {
+  std::string cmd = argv[0];
+  utils::strToLowerCase(cmd);
+
+  if (cmd == "get")
+    return std::make_unique<GetCommand>(ds);
+
+  if (cmd == "set")
+    return std::make_unique<SetCommand>(ds);
+
+  if (cmd == "del")
+    return std::make_unique<DelCommand>(ds);
+
+  throw std::runtime_error("command is invalid.");
+}
+
 void SetCommand::execute(std::shared_ptr<Connection> &conn) {
   if (conn->argv.size() != 3)
     throw CommandError("wrong number of arguments for 'set' command.");
@@ -16,4 +33,17 @@ void GetCommand::execute(std::shared_ptr<Connection> &conn) {
 
   const std::string &value = ds.get(conn->argv[1]);
   serializer.writeBulkString(conn, value);
+}
+
+void DelCommand::execute(std::shared_ptr<Connection> &conn) {
+  if (conn->argv.size() < 2)
+    throw CommandError("wrong number of arguments for 'del' command");
+
+  int c = 0;
+  for (size_t i = 1; i < conn->argv.size(); i++) {
+    if (ds.del(conn->argv[i]))
+      c++;
+  }
+
+  serializer.writeInteger(conn, c);
 }

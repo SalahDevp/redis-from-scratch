@@ -14,6 +14,8 @@ public:
 
   void writeBulkString(std::shared_ptr<Connection> &conn, const std::string &s);
 
+  void writeInteger(std::shared_ptr<Connection> &conn, int i);
+
 private:
   void bufferWrite(std::shared_ptr<Connection> &conn, const std::string &str);
 };

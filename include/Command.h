@@ -39,21 +39,16 @@ public:
   void execute(std::shared_ptr<Connection> &conn);
 };
 
+class DelCommand : public Command {
+public:
+  DelCommand(DataStore &ds) : Command(ds) {};
+  void execute(std::shared_ptr<Connection> &conn);
+};
+
 class CommandFactory {
 public:
   static std::unique_ptr<Command>
-  getCommand(const std::vector<std::string> &argv, DataStore &ds) {
-    std::string cmd = argv[0];
-    utils::strToLowerCase(cmd);
-
-    if (cmd == "get")
-      return std::make_unique<GetCommand>(ds);
-
-    if (cmd == "set")
-      return std::make_unique<SetCommand>(ds);
-
-    throw std::runtime_error("command is invalid.");
-  }
+  getCommand(const std::vector<std::string> &argv, DataStore &ds);
 };
 
 #endif

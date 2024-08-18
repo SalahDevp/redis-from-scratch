@@ -8,10 +8,12 @@ server_port = 6973
 def handleResponse(args):
     i = 0
     while i < len(args):
-        if args[i] == "+":
+        if args[i].startswith("+"):
             print(args[i][1:])
         elif args[i].startswith("$"):
             print(args[i + 1])
+        elif args[i].startswith(":"):
+            print(f"(integer) {args[i][1:]}")
 
         i += 1
 

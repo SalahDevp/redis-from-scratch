@@ -8,6 +8,10 @@ class DataStore {
 public:
   void set(const std::string &key, const std::string &value);
   const std::string &get(const std::string &key);
+  /**
+   * returns true if key is deleted
+   */
+  bool del(const std::string &key);
 
   class KeyNotFoundError : public std::runtime_error {
   public:
