@@ -3,7 +3,7 @@
 
 // TODO: write result
 void SetCommand::execute(std::shared_ptr<Connection> &conn) {
-  if (conn->argv.size() == 3)
+  if (conn->argv.size() != 3)
     throw CommandError("wrong number of arguments for 'set' command.");
 
   ds.set(conn->argv[1], conn->argv[2]);

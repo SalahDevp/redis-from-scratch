@@ -63,3 +63,17 @@ TEST_F(ParserTest, ParseInvalidQuery_MissingDollar) {
 
   EXPECT_THROW(parser.parseQuery(conn), Parser::ParserError);
 }
+
+TEST_F(ParserTest, ParseEmptyQuery) {
+  std::string query = "*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n";
+
+  sdsCat(conn->query_buf, query.c_str(), query.length());
+  parser.parseQuery(conn);
+  conn->argv.clear();
+  // second parse is called on empty query
+  EXPECT_FALSE(parser.parseQuery(conn));
+  EXPECT_EQ(conn->qpos, query.length()); // qpos is still at the end of the
+                                         // query
+
+  EXPECT_EQ(conn->argv.size(), 0);
+}

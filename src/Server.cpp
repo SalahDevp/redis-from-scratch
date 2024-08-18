@@ -76,9 +76,9 @@ void Server::eventLoop() {
             acceptConnections();
           } else if (conn_map[pfd.fd]->state == ConnState::REQUEST) {
             handleRequest(conn_map[pfd.fd]);
-          } /* else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
+          } else if (conn_map[pfd.fd]->state == ConnState::RESPONSE) {
             sendResponse(conn_map[pfd.fd]);
-          } */
+          }
 
         } else { // error or client closed connection
           if (pfd.fd == sd) {
@@ -144,6 +144,9 @@ the already parsed portion of the buffer to free up space for the next read.*/
       // clear command
       conn->argv.clear();
       conn->argc = 0;
+      // change conn state to ensure the response is sent after a
+      // command execution
+      conn->state = ConnState::RESPONSE;
     }
 
   } catch (const std::runtime_error &e) {
@@ -151,17 +154,13 @@ the already parsed portion of the buffer to free up space for the next read.*/
   }
 }
 
-/* void Server::sendResponse(Connection *conn) {
-  try {
-    bool isWriteDone = io.write(conn);
-    if (isWriteDone) {
-      closeConnection(conn->fd);
-    }
-    catch (const IOHandler::IOError &e) {
-      std::cerr << e.what() << std::endl;
-      closeConnection(conn->fd);
-    }
-  } */
+void Server::sendResponse(std::shared_ptr<Connection> &conn) {
+  io.write(conn);
+  // TODO: check threshold
+  if (conn->res_pos >= sdsLen(conn->res_buf))
+    // accept requests from client again after writing the full res buffer
+    conn->state = ConnState::REQUEST;
+}
 
 int main() {
   Server server;

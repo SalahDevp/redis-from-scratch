@@ -6,7 +6,8 @@
 #include <cstring>
 
 bool Parser::parseQuery(std::shared_ptr<Connection> &conn) {
-  assert(conn->qpos < sdsLen(conn->query_buf));
+  if (conn->qpos >= sdsLen(conn->query_buf))
+    return false;
 
   if (!conn->argc) { // read array length
     if (conn->query_buf[conn->qpos] != '*')

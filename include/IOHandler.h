@@ -10,7 +10,7 @@
 class IOHandler {
 public:
   void readQuery(std::shared_ptr<Connection> &conn);
-  bool write(Connection *conn);
+  void write(std::shared_ptr<Connection> &conn);
 
   class IOError : public std::runtime_error {
   public:

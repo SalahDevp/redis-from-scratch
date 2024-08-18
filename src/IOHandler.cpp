@@ -27,32 +27,29 @@ void IOHandler::readQuery(std::shared_ptr<Connection> &conn) {
         break;
     } else {
       sdsSetLen(conn->query_buf, sdsLen(conn->query_buf) + r);
+      // NOTE: this can be removed
       conn->query_buf[sdsLen(conn->query_buf)] = '\0';
     }
   }
 }
 
-/**
- * returns true if the full message is written
- */
-/* bool IOHandler::write(Connection *conn) {
+void IOHandler::write(std::shared_ptr<Connection> &conn) {
 
-  // send message length
-  uint32_t msg_ln = conn->write_buf_size;
-
-  if (conn->written_bytes == 0)
-    if (::write(conn->fd, &msg_ln, sizeof(msg_ln)) < (ssize_t)sizeof(msg_ln))
-{ throw IOError("error sending message");
+  while (true) {
+    int w = ::write(conn->fd, conn->res_buf + conn->res_pos,
+                    sdsLen(conn->res_buf) - conn->res_pos);
+    if (w <= 0) {
+      if (w == 0) { // EOF
+        throw IOError("connection closed");
+      } else if (errno != EWOULDBLOCK)
+        throw IOError("error reading message");
+      else
+        break;
+    } else {
+      conn->res_pos += w;
+      if(conn->res_pos >= sdsLen(conn->res_buf)) {
+        break;
+      }
     }
-
-  // send message
-  ssize_t bytes_sent = ::write(conn->fd, conn->write_buf +
-conn->written_bytes, conn->write_buf_size - conn->written_bytes);
-
-  if (bytes_sent <= 0)
-    throw IOError("error sending message");
-
-  conn->written_bytes += bytes_sent;
-
-  return conn->write_buf_size == conn->written_bytes;
-} */
+  }
+}
