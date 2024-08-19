@@ -15,3 +15,8 @@ Connection::~Connection() {
   if (res_buf)
     sdsFree(res_buf);
 }
+
+void Connection::clearArgs() {
+  argv.clear();
+  argc = 0;
+}

@@ -16,6 +16,9 @@ public:
 
   void writeInteger(std::shared_ptr<Connection> &conn, int i);
 
+  void writeSimpleError(std::shared_ptr<Connection> &conn,
+                        const std::string &s);
+
 private:
   void bufferWrite(std::shared_ptr<Connection> &conn, const std::string &str);
 };

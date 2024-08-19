@@ -5,6 +5,7 @@
 #include "DataStore.h"
 #include "IOHandler.h"
 #include "Parser.h"
+#include "ResponseSerializer.h"
 #include <cerrno>
 #include <list>
 #include <memory>
@@ -31,16 +32,17 @@ public:
                              std::to_string(errno)) {};
   };
 
-  class ClientError : public std::runtime_error {
+  class ConnectionError : public std::runtime_error {
   public:
-    ClientError(const std::string &msg)
-        : std::runtime_error("Client Error: " + msg) {};
+    ConnectionError(const std::string &msg)
+        : std::runtime_error("Connection Error: " + msg) {};
   };
 
 private:
   int sd;
   IOHandler io;
   Parser parser;
+  ResponseSerializer serializer;
   DataStore dataStore;
   std::list<std::shared_ptr<Connection>> connections;
   std::unordered_map<int, std::shared_ptr<Connection>> conn_map;

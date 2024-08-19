@@ -1,5 +1,6 @@
 #include "Server.h"
 #include "Command.h"
+#include "Parser.h"
 #include "utils.h"
 
 #include <arpa/inet.h>
@@ -84,10 +85,10 @@ void Server::eventLoop() {
           if (pfd.fd == sd) {
             throw Server::ServerError("error in poll results");
           } else {
-            throw Server::ClientError("connection closed by client");
+            throw Server::ConnectionError("connection closed by client");
           }
         }
-      } catch (const Server::ClientError &e) {
+      } catch (const Server::ConnectionError &e) {
         std::cerr << e.what() << std::endl;
         closeConnection(pfd.fd);
         continue;
@@ -139,18 +140,33 @@ the already parsed portion of the buffer to free up space for the next read.*/
     while (parser.parseQuery(conn)) {
       // execute command
       std::unique_ptr<Command> command =
-          CommandFactory::getCommand(conn->argv, dataStore);
+          CommandFactory::getCommand(conn->argv, dataStore, serializer);
       command->execute(conn);
       // clear command
-      conn->argv.clear();
-      conn->argc = 0;
+      conn->clearArgs();
       // change conn state to ensure the response is sent after a
       // command execution
       conn->state = ConnState::RESPONSE;
     }
 
+  } catch (const Parser::ParserError &e) {
+    // clear query buffer (if one command syntax is wrong all next commands
+    // are affected)
+    sdsSetLen(conn->query_buf, 0);
+    conn->clearArgs();
+    serializer.writeSimpleError(conn, e.what());
+    conn->state = ConnState::RESPONSE;
+
+  } catch (const Command::CommandError &e) {
+    conn->clearArgs();
+    serializer.writeSimpleError(conn, e.what());
+    conn->state = ConnState::RESPONSE;
+
+  } catch (const IOHandler::IOError &e) {
+    throw Server::ConnectionError(std::string(e.what()));
+
   } catch (const std::runtime_error &e) {
-    throw Server::ClientError(std::string(e.what()));
+    throw Server::ServerError(e.what());
   }
 }
 

@@ -28,6 +28,13 @@ void ResponseSerializer::writeInteger(std::shared_ptr<Connection> &conn,
   bufferWrite(conn, CRLF);
 }
 
+void ResponseSerializer::writeSimpleError(std::shared_ptr<Connection> &conn,
+                                          const std::string &s) {
+  bufferWrite(conn, "-ERR ");
+  bufferWrite(conn, s);
+  bufferWrite(conn, CRLF);
+}
+
 void ResponseSerializer::bufferWrite(std::shared_ptr<Connection> &conn,
                                      const std::string &str) {
   // TODO: check full if full shift

@@ -27,12 +27,11 @@ public:
 
   ~Connection();
 
-  // TODO: add a function to clear args after cmd execution to allow parsing for
-  // a new cmd
-
   Connection(const Connection &other) = delete;
 
   Connection &operator=(const Connection &other) = delete;
+
+  void clearArgs();
 };
 
 #endif

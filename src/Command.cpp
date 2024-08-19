@@ -2,21 +2,21 @@
 #include <vector>
 
 std::unique_ptr<Command>
-CommandFactory::getCommand(const std::vector<std::string> &argv,
-                           DataStore &ds) {
+CommandFactory::getCommand(const std::vector<std::string> &argv, DataStore &ds,
+                           ResponseSerializer &serializer) {
   std::string cmd = argv[0];
   utils::strToLowerCase(cmd);
 
   if (cmd == "get")
-    return std::make_unique<GetCommand>(ds);
+    return std::make_unique<GetCommand>(ds, serializer);
 
   if (cmd == "set")
-    return std::make_unique<SetCommand>(ds);
+    return std::make_unique<SetCommand>(ds, serializer);
 
   if (cmd == "del")
-    return std::make_unique<DelCommand>(ds);
+    return std::make_unique<DelCommand>(ds, serializer);
 
-  throw std::runtime_error("command is invalid.");
+  throw Command::CommandError("command '" + cmd + "' is invalid.");
 }
 
 void SetCommand::execute(std::shared_ptr<Connection> &conn) {

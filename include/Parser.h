@@ -16,7 +16,7 @@ public:
   class ParserError : public std::runtime_error {
   public:
     ParserError(const char *msg)
-        : std::runtime_error("Parser Error: " + std::string(msg)) {}
+        : std::runtime_error("Parsing Error: " + std::string(msg)) {}
   };
 
 private:

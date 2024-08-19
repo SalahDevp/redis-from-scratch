@@ -11,7 +11,8 @@
 
 class Command {
 public:
-  Command(DataStore &ds) : ds(ds) {};
+  Command(DataStore &ds, ResponseSerializer &serializer)
+      : ds(ds), serializer(serializer) {};
   virtual void execute(std::shared_ptr<Connection> &conn) = 0;
 
   class CommandError : public std::runtime_error {
@@ -29,26 +30,30 @@ protected:
 
 class SetCommand : public Command {
 public:
-  SetCommand(DataStore &ds) : Command(ds) {};
+  SetCommand(DataStore &ds, ResponseSerializer &serializer)
+      : Command(ds, serializer) {};
   void execute(std::shared_ptr<Connection> &conn);
 };
 
 class GetCommand : public Command {
 public:
-  GetCommand(DataStore &ds) : Command(ds) {};
+  GetCommand(DataStore &ds, ResponseSerializer &serializer)
+      : Command(ds, serializer) {};
   void execute(std::shared_ptr<Connection> &conn);
 };
 
 class DelCommand : public Command {
 public:
-  DelCommand(DataStore &ds) : Command(ds) {};
+  DelCommand(DataStore &ds, ResponseSerializer &serializer)
+      : Command(ds, serializer) {};
   void execute(std::shared_ptr<Connection> &conn);
 };
 
 class CommandFactory {
 public:
   static std::unique_ptr<Command>
-  getCommand(const std::vector<std::string> &argv, DataStore &ds);
+  getCommand(const std::vector<std::string> &argv, DataStore &ds,
+             ResponseSerializer &serializer);
 };
 
 #endif
