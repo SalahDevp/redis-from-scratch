@@ -14,6 +14,8 @@ def handleResponse(args):
             print(args[i + 1])
         elif args[i].startswith(":"):
             print(f"(integer) {args[i][1:]}")
+        elif args[i].startswith("-"):
+            print(f"(error) {args[i][args[i].find(" ")+1:]}")
 
         i += 1
 
@@ -22,7 +24,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect((server_ip, server_port))
 
     while True:
-        sys.stdout.write("> ")
+        sys.stdout.write(f"{server_ip}:{server_port}> ")
         message = input()
 
         args = message.split(" ")
