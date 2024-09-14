@@ -15,7 +15,7 @@ def handleResponse(args):
         elif args[i].startswith(":"):
             print(f"(integer) {args[i][1:]}")
         elif args[i].startswith("-"):
-            print(f"(error) {args[i][args[i].find(" ")+1:]}")
+            print(f'(error) {args[i][args[i].find(" ")+1:]}')
 
         i += 1
 
