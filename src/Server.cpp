@@ -10,6 +10,7 @@
 #include <memory>
 #include <netinet/ip.h>
 #include <poll.h>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>

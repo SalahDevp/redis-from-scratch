@@ -2,7 +2,7 @@ import socket
 import sys
 
 server_ip = "127.0.0.1"
-server_port = 6973
+server_port = 6379
 
 
 def handleResponse(args):

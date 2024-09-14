@@ -14,7 +14,7 @@
 #include <string>
 #include <unordered_map>
 
-#define PORT 6973
+#define PORT 6379
 #define SOMAXCONN 128
 #define POLL_TIMEOUT -1
 #define BUF_AVAIL_THRESHOLD 0.25

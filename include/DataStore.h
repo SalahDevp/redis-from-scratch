@@ -1,6 +1,7 @@
 #ifndef DATA_STORE_H
 #define DATA_STORE_H
 
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
