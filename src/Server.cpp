@@ -108,6 +108,7 @@ void Server::acceptConnections() {
         return; // no pending connections
       throw Server::ServerError("error in accept");
     }
+    utils::fd_set_nb(connfd);
     addConnection(connfd);
   }
 }
